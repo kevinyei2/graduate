@@ -1,0 +1,6 @@
+:root{--bg:#fff;--text:#1d2330;--muted:#5b6475;--accent:#2f6fed;--line:#e2e5eb}
+@media (prefers-color-scheme:dark){:root{--bg:#14171d;--text:#e6e9ef;--muted:#97a0b3;--accent:#6b9bff;--line:#2d323d}}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.75 system-ui,-apple-system,"Noto Sans TC","Microsoft JhengHei",sans-serif}
+main{max-width:720px;margin:0 auto;padding:40px 16px 80px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:19px;margin-top:32px;border-top:1px solid var(--line);padding-top:20px}
+a{color:var(--accent)}.muted{color:var(--muted);font-size:14px}nav a{margin-right:16px}
