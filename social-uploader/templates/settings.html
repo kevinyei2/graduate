@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>設定</h1>
+
+<section class="card">
+  <h2>平台開關</h2>
+  <form method="post" action="{{ url_for('save_platforms') }}" class="row">
+    {% for p in ['youtube', 'instagram', 'tiktok'] %}
+      <label class="inline"><input type="checkbox" name="{{ p }}_enabled" value="1" {{ 'checked' if s.platforms[p].enabled }}> {{ PLATFORM_NAMES[p] }}</label>
+    {% endfor %}
+    <button>儲存</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2 class="plat-youtube">YouTube</h2>
+  {% if yt.channel %}
+    <p class="ok">✔ 已連結頻道：<b>{{ yt.channel[0] }}</b></p>
+    <form method="post" action="{{ url_for('youtube_disconnect') }}"><button class="ghost">中斷連結</button></form>
+  {% else %}
+    {% if yt.error %}<p class="err">{{ yt.error }}</p>{% endif %}
+    <ol class="steps">
+      <li>上傳 Google OAuth 用戶端 JSON（類型：電腦版應用程式）{% if yt.has_secret %} <span class="ok">✔ 已上傳</span>{% endif %}
+        <form method="post" action="{{ url_for('youtube_secret') }}" enctype="multipart/form-data" class="row">
+          <input type="file" name="client_secret" accept=".json,application/json">
+          <button>上傳</button>
+        </form>
+      </li>
+      <li>{% if yt.has_secret %}<a class="button" href="{{ url_for('youtube_start') }}">連結 YouTube 帳號</a>{% else %}<span class="muted">先完成第 1 步</span>{% endif %}</li>
+    </ol>
+  {% endif %}
+  <p class="hint">設定教學：docs/setup-youtube.md</p>
+</section>
+
+<section class="card">
+  <h2 class="plat-instagram">Instagram</h2>
+  {% if s.instagram.access_token %}
+    <p class="ok">✔ 已連結：<b>@{{ s.instagram.username }}</b>（權杖約 {{ ((s.instagram.token_expires_at - now) / 86400)|round|int }} 天後到期，會自動續期）</p>
+    <form method="post" action="{{ url_for('instagram_disconnect') }}"><button class="ghost">中斷連結</button></form>
+  {% endif %}
+  <form method="post" action="{{ url_for('instagram_save') }}">
+    <label>{{ '更換' if s.instagram.access_token }}存取權杖（Meta 開發者後台產生的長效權杖）
+      <input type="password" name="access_token" autocomplete="off" placeholder="IGAA…"></label>
+    <button>驗證並儲存</button>
+  </form>
+  <p class="hint">設定教學：docs/setup-instagram.md</p>
+</section>
+
+<section class="card">
+  <h2 class="plat-tiktok">TikTok <span class="muted">{{ '' if s.platforms.tiktok.enabled else '（目前停用）' }}</span></h2>
+  {% if s.tiktok.access_token %}<p class="ok">✔ 已連結</p>{% endif %}
+  <form method="post" action="{{ url_for('tiktok_save') }}">
+    <label>Client Key<input name="client_key" value="{{ s.tiktok.client_key }}"></label>
+    <label>Client Secret {% if s.tiktok.client_secret %}<span class="ok">（已儲存，留空不變）</span>{% endif %}
+      <input type="password" name="client_secret" autocomplete="off"></label>
+    <label>預設方式
+      <select name="mode">
+        <option value="inbox" {{ 'selected' if s.tiktok.mode == 'inbox' }}>送到草稿匣</option>
+        <option value="direct" {{ 'selected' if s.tiktok.mode == 'direct' }}>直接發佈</option>
+      </select></label>
+    <button>儲存</button>
+    {% if s.tiktok.client_key %}<a class="button" href="{{ url_for('tiktok_start') }}">連結 TikTok 帳號</a>{% endif %}
+  </form>
+  <p class="hint">TikTok App 的 Redirect URI 請填：<code>{{ tt_redirect }}</code>。設定教學：docs/setup-tiktok.md</p>
+</section>
+{% endblock %}

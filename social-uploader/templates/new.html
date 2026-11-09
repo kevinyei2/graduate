@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% macro schedule(prefix, label) -%}
+  <div class="schedule" data-prefix="{{ prefix }}">
+    <span>{{ label }}</span>
+    <label><input type="radio" name="{{ prefix }}_when" value="now" {{ 'checked' if form.get(prefix ~ '_when', 'now') == 'now' }}> 立即發佈</label>
+    <label><input type="radio" name="{{ prefix }}_when" value="later" {{ 'checked' if form.get(prefix ~ '_when') == 'later' }}> 排程</label>
+    <input type="datetime-local" name="{{ prefix }}_at" value="{{ form.get(prefix ~ '_at', '') }}">
+  </div>
+{%- endmacro %}
+{% block content %}
+<h1>新增貼文</h1>
+<form method="post" enctype="multipart/form-data" id="post-form">
+  <section class="card">
+    <h2>1. 影片</h2>
+    <input type="file" name="video" accept="video/mp4,video/quicktime,.mp4,.mov,.m4v" required>
+    <p class="hint">建議直式 9:16、H.264 mp4。IG Reels 需 3 秒～15 分鐘；YouTube 3 分鐘內的直式影片會自動成為 Shorts。</p>
+  </section>
+
+  <section class="card">
+    <h2>2. 共用內容 <span class="muted">（各平台留空就用這裡的）</span></h2>
+    <label>說明文字<textarea name="shared_text" rows="4">{{ form.get('shared_text', '') }}</textarea></label>
+    <label>Hashtag<input name="shared_tags" placeholder="#旅行 #vlog 美食（空白或逗號分隔，# 可省略）" value="{{ form.get('shared_tags', '') }}"></label>
+    {{ schedule('common', '發佈時間') }}
+  </section>
+
+  <h2>3. 各平台</h2>
+
+  <section class="card platform {{ 'disabled' if not enabled.youtube }}">
+    <label class="toggle"><input type="checkbox" name="youtube_on" value="1" {{ 'checked' if enabled.youtube and (not form or form.get('youtube_on')) }} {{ 'disabled' if not enabled.youtube }}> <b class="plat-youtube">YouTube</b></label>
+    <div class="fields">
+      <label>標題 <span class="count" data-for="youtube_title" data-max="100"></span><input name="youtube_title" id="youtube_title" maxlength="100" value="{{ form.get('youtube_title', '') }}"></label>
+      <label>說明（留空用共用）<textarea name="youtube_text" rows="3">{{ form.get('youtube_text', '') }}</textarea></label>
+      <label>Hashtag（留空用共用）<input name="youtube_tags" value="{{ form.get('youtube_tags', '') }}" placeholder="#Shorts #旅行"></label>
+      <div class="row">
+        <label>公開狀態
+          <select name="youtube_privacy">
+            {% for v, n in [('public','公開'),('unlisted','不公開（有連結可看）'),('private','私人')] %}
+            <option value="{{ v }}" {{ 'selected' if form.get('youtube_privacy') == v }}>{{ n }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="inline"><input type="checkbox" name="youtube_kids" value="1" {{ 'checked' if form.get('youtube_kids') }}> 為兒童打造</label>
+      </div>
+      <label class="inline"><input type="checkbox" name="youtube_custom_time" value="1" class="custom-time" {{ 'checked' if form.get('youtube_custom_time') }}> 使用不同的發佈時間</label>
+      {{ schedule('youtube', 'YouTube 時間') }}
+    </div>
+  </section>
+
+  <section class="card platform {{ 'disabled' if not enabled.instagram }}">
+    <label class="toggle"><input type="checkbox" name="instagram_on" value="1" {{ 'checked' if enabled.instagram and (not form or form.get('instagram_on')) }} {{ 'disabled' if not enabled.instagram }}> <b class="plat-instagram">Instagram Reels</b></label>
+    <div class="fields">
+      <label>說明（留空用共用）<textarea name="instagram_text" rows="3">{{ form.get('instagram_text', '') }}</textarea></label>
+      <label>Hashtag（留空用共用，最多 30 個）<input name="instagram_tags" value="{{ form.get('instagram_tags', '') }}"></label>
+      <label class="inline"><input type="checkbox" name="instagram_feed" value="1" {{ 'checked' if not form or form.get('instagram_feed') }}> 同時顯示在主頁動態</label>
+      <label class="inline"><input type="checkbox" name="instagram_custom_time" value="1" class="custom-time" {{ 'checked' if form.get('instagram_custom_time') }}> 使用不同的發佈時間</label>
+      {{ schedule('instagram', 'IG 時間') }}
+    </div>
+  </section>
+
+  <section class="card platform {{ 'disabled' if not enabled.tiktok }}">
+    <label class="toggle"><input type="checkbox" name="tiktok_on" value="1" {{ 'checked' if enabled.tiktok and form.get('tiktok_on') }} {{ 'disabled' if not enabled.tiktok }}> <b class="plat-tiktok">TikTok</b>
+      {% if not enabled.tiktok %}<span class="muted">（已停用，可在設定開啟）</span>{% endif %}</label>
+    <div class="fields">
+      <label>說明（留空用共用）<textarea name="tiktok_text" rows="3">{{ form.get('tiktok_text', '') }}</textarea></label>
+      <label>Hashtag（留空用共用）<input name="tiktok_tags" value="{{ form.get('tiktok_tags', '') }}"></label>
+      <div class="row">
+        <label>方式
+          <select name="tiktok_mode">
+            <option value="inbox">送到草稿匣（手機上按發佈）</option>
+            <option value="direct" {{ 'selected' if form.get('tiktok_mode') == 'direct' }}>直接發佈</option>
+          </select>
+        </label>
+        <label>直接發佈的隱私
+          <select name="tiktok_privacy">
+            {% for v, n in [('SELF_ONLY','僅自己（未審核 App 只能選這個）'),('PUBLIC_TO_EVERYONE','所有人'),('MUTUAL_FOLLOW_FRIENDS','互相追蹤的朋友'),('FOLLOWER_OF_CREATOR','追蹤者')] %}
+            <option value="{{ v }}" {{ 'selected' if form.get('tiktok_privacy') == v }}>{{ n }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+      <label class="inline"><input type="checkbox" name="tiktok_custom_time" value="1" class="custom-time" {{ 'checked' if form.get('tiktok_custom_time') }}> 使用不同的發佈時間</label>
+      {{ schedule('tiktok', 'TikTok 時間') }}
+    </div>
+  </section>
+
+  <button type="submit" class="primary big" id="submit">送出</button>
+  <p class="hint">排程發佈需要本程式保持開啟；若到時間電腦是關的，下次開啟時會自動補發。</p>
+</form>
+
+<script>
+(function () {
+  // 排程欄位：選「排程」才顯示時間
+  document.querySelectorAll('.schedule').forEach(function (box) {
+    var dt = box.querySelector('input[type=datetime-local]');
+    function sync() {
+      var later = box.querySelector('input[value=later]').checked;
+      dt.style.display = later ? '' : 'none';
+    }
+    box.querySelectorAll('input[type=radio]').forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  });
+  // 各平台「使用不同時間」才顯示各自的排程
+  document.querySelectorAll('.custom-time').forEach(function (cb) {
+    var box = cb.closest('.fields').querySelector('.schedule');
+    function sync() { box.style.display = cb.checked ? '' : 'none'; }
+    cb.addEventListener('change', sync); sync();
+  });
+  // 勾選平台才展開欄位
+  document.querySelectorAll('.platform').forEach(function (sec) {
+    var cb = sec.querySelector('.toggle input'), f = sec.querySelector('.fields');
+    function sync() { f.style.display = cb.checked ? '' : 'none'; }
+    cb.addEventListener('change', sync); sync();
+  });
+  // 字數
+  document.querySelectorAll('.count').forEach(function (c) {
+    var input = document.getElementById(c.dataset.for);
+    function sync() { c.textContent = input.value.length + ' / ' + c.dataset.max; }
+    input.addEventListener('input', sync); sync();
+  });
+  document.getElementById('post-form').addEventListener('submit', function () {
+    var b = document.getElementById('submit'); b.disabled = true; b.textContent = '影片傳送中…';
+  });
+})();
+</script>
+{% endblock %}

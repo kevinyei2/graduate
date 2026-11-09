@@ -72,3 +72,9 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# social-uploader：本機資料（憑證、權杖、影片、資料庫）絕不上傳
+social-uploader/data/
+__pycache__/
+*.pyc
+.venv/

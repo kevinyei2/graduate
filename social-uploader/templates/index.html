@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block head %}{% if has_active %}<meta http-equiv="refresh" content="15">{% endif %}{% endblock %}
+{% block content %}
+<h1>上傳佇列</h1>
+{% if not posts %}
+  <p class="muted">還沒有貼文。<a href="{{ url_for('new_post') }}">新增第一則 →</a></p>
+{% endif %}
+{% for p in posts %}
+<section class="card">
+  <div class="card-head">
+    <strong>{{ p.original_name }}</strong>
+    <span class="muted">建立於 {{ p.created_at|dt }}</span>
+  </div>
+  <table class="targets">
+    {% for t in p.targets %}
+    <tr>
+      <td class="plat plat-{{ t.platform }}">{{ PLATFORM_NAMES[t.platform] }}</td>
+      <td><span class="badge s-{{ t.status }}">{{ STATUS_NAMES[t.status] }}</span></td>
+      <td class="muted">
+        {% if t.status == 'pending' and t.scheduled_at > now %}排程：{{ t.scheduled_at|dt }}{% else %}{{ t.updated_at|dt }}{% endif %}
+      </td>
+      <td class="result">
+        {% if t.result %}{% if t.result.startswith('http') %}<a href="{{ t.result }}" target="_blank" rel="noopener">{{ t.result }}</a>{% else %}{{ t.result }}{% endif %}{% endif %}
+        {% if t.error %}<span class="err">{{ t.error }}</span>{% endif %}
+      </td>
+      <td class="actions">
+        {% if t.status in ('failed', 'cancelled') %}
+          <form method="post" action="{{ url_for('retry', target_id=t.id) }}"><button>重試</button></form>
+        {% elif t.status == 'pending' %}
+          <form method="post" action="{{ url_for('cancel', target_id=t.id) }}"><button class="ghost">取消</button></form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</section>
+{% endfor %}
+{% endblock %}
